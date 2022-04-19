@@ -6,7 +6,7 @@ import pika
 
 
 connection = pika.BlockingConnection(
-    pika.ConnectionParameters(host='localhost'))
+    pika.ConnectionParameters(host='my-rabbit'))
 
 channel = connection.channel()
 
