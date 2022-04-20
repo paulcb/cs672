@@ -1,3 +1,4 @@
+import sys
 import time
 import sqlite3
 from PIL import Image
@@ -5,27 +6,16 @@ from urllib import response
 import pika
 
 
-connection = pika.BlockingConnection(
-    pika.ConnectionParameters(host='my-rabbit'))
+class AppDB:
+  sqlite_insert_blob_query = """ INSERT INTO Image
+                            (name, img, height, width) VALUES (?, ?, ?, ?)"""
+  def __init__(self) -> None:
+    self.con = sqlite3.connect('example.db')
+    self.cur = self.con.cursor()
+    self.cur.execute('''CREATE TABLE Image
+                  (name, img, height, width)''')
+app_db = AppDB()
 
-channel = connection.channel()
-
-channel.queue_declare(queue='rpc_queue')
-
-
-con = sqlite3.connect('example.db')
-cur = con.cursor()
-cur.execute('''CREATE TABLE Image
-               (name, img, height, width)''')
-sqlite_insert_blob_query = """ INSERT INTO Image
-                          (name, img, height, width) VALUES (?, ?, ?, ?)"""
-def fib(n):
-    if n == 0:
-        return 0
-    elif n == 1:
-        return 1
-    else:
-        return fib(n - 1) + fib(n - 2)
 
 def bytes_len(n):
   # image = Image.open()
@@ -38,8 +28,8 @@ def bytes_len(n):
 
   # print(image)
   # cur.execute("INSERT INTO stocks VALUES ('2006-01-05','BUY','RHAT',100,35.14)")
-  cur.execute(sqlite_insert_blob_query, n)
-  con.commit()
+  app_db.cur.execute(app_db.sqlite_insert_blob_query, n)
+  app_db.con.commit()
   # for row in cur.execute('SELECT * FROM Image ORDER BY name'):
       # print(row)
 
@@ -55,11 +45,19 @@ def on_request(ch, method, props, body):
     response = bytes_len(filedata)
     ch.basic_publish(exchange='',
                      routing_key=props.reply_to,
-                     properties=pika.BasicProperties(correlation_id = \
-                                                         props.correlation_id),
+                     properties=pika.BasicProperties(correlation_id = props.correlation_id),
                      body=str(response))
     ch.basic_ack(delivery_tag=method.delivery_tag)
     print("--- %s seconds ---" % (time.time() - start_time))
+
+host = sys.argv[1]
+connection = pika.BlockingConnection(
+    pika.ConnectionParameters(host=host))
+
+channel = connection.channel()
+
+channel.queue_declare(queue='rpc_queue')
+
 
 channel.basic_qos(prefetch_count=1)
 # channel.queue_delete(queue='rpc_queue')
@@ -68,4 +66,4 @@ channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
 print(" [x] Awaiting RPC requests")
 channel.start_consuming()
 
-con.close()
+app_db.con.close()

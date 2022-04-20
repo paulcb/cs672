@@ -1,13 +1,15 @@
+import sys
 from PIL import Image
 import time
 import pika
 import uuid
 
+
 class ImageRpcClient(object):
 
-    def __init__(self):
+    def __init__(self, host='localhost'):
         self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host='localhost'))
+            pika.ConnectionParameters(host=host))
 
         self.channel = self.connection.channel()
 
@@ -38,8 +40,9 @@ class ImageRpcClient(object):
             self.connection.process_data_events()
         return self.response
 
+host = sys.argv[1]
 c = 0
-image_rpc = ImageRpcClient()
+image_rpc = ImageRpcClient(host=host)
 while True:
   start_time = time.time()
   image_path = '0_11.jpg'
