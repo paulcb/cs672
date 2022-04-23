@@ -1,6 +1,9 @@
 #!/bin/sh
 docker build -f app_a/Dockerfile -t app_a .
+docker build -f tensorflow_app/Dockerfile -t tensorflow_app .
+
 docker run --name app_a_1 -it -v /storage app_a /bin/bash
+
 docker container start app_a_1
 docker exec -it app_a_1 bash
 docker container rm -f app_a_1
@@ -9,4 +12,4 @@ docker run --hostname my-rabbit --network=net1 -it --rm --name rabbitmq -p 5672:
 
 docker run --network=net1 --name app_a_1 -it -v /storage app_a /bin/bash
 
-docker run -it --network=net1 --rm --name tensorflow tensorflow/tensorflow
+docker run -it --network=net1 --rm --name tensorflow tensorflow_app

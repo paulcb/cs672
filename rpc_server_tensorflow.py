@@ -1,40 +1,11 @@
 import sys
 import time
-import sqlite3
 from PIL import Image
 from urllib import response
 import pika
 
-
-class AppDB:
-  sqlite_insert_blob_query = """ INSERT INTO Image
-                            (name, img, height, width) VALUES (?, ?, ?, ?)"""
-  def __init__(self) -> None:
-    self.con = sqlite3.connect('example.db')
-    self.cur = self.con.cursor()
-    self.cur.execute("DROP TABLE IF EXISTS Image")
-    self.cur.execute('''CREATE TABLE Image (name, img, height, width)''')
-    self.con.commit()
-
-app_db = AppDB()
-
-
 def bytes_len(n):
-  # image = Image.open()
-  # return image.height, image.width
-  
-  # print(type(n))
-  # print(len(n))
-  # print(n[0], '-', len(n[1]), n[2], n[3])
-  # image = Image.frombytes('RGB', (n[2], n[3]), n[1])
-
-  # print(image)
-  # cur.execute("INSERT INTO stocks VALUES ('2006-01-05','BUY','RHAT',100,35.14)")
-  app_db.cur.execute(app_db.sqlite_insert_blob_query, n)
-  app_db.con.commit()
-  # for row in cur.execute('SELECT * FROM Image ORDER BY name'):
-      # print(row)
-
+  pass
   # return image
 
 def on_request(ch, method, props, body):
@@ -68,4 +39,4 @@ try:
   print(" [x] Awaiting RPC requests")
   channel.start_consuming()
 finally:
-  app_db.con.close()
+  pass

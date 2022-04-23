@@ -10,14 +10,21 @@ services:
     networks:
       - default
 
+  tensorflow:
+    image: tensorflow/tensorflow
+    hostname: tensorflow-0
+    networks:
+      - default
+
   app_a-0:
     image: app_a
+    hostname: app_a-0
     restart: unless-stopped
     depends_on:
       - rabbitmq
     networks:
       - default
-
+  
 networks:
   default:
     external:
