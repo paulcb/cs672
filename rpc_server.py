@@ -4,7 +4,45 @@ import sqlite3
 from PIL import Image
 from urllib import response
 import pika
+import uuid
 
+
+class ImageRpcClient(object):
+
+  def __init__(self, host='localhost'):
+    self.connection = pika.BlockingConnection(
+        pika.ConnectionParameters(host=host))
+
+    self.channel = self.connection.channel()
+
+    result = self.channel.queue_declare(queue='', exclusive=True)
+    self.callback_queue = result.method.queue
+
+    self.channel.basic_consume(
+        queue=self.callback_queue,
+        on_message_callback=self.on_response,
+        auto_ack=True)
+
+  def on_response(self, ch, method, props, body):
+    if self.corr_id == props.correlation_id:
+      self.response = body
+
+  def call(self, n):
+    self.response = None
+    self.corr_id = str(uuid.uuid4())
+    self.channel.basic_publish(
+        exchange='',
+        routing_key='rpc_tensor_queue',
+        properties=pika.BasicProperties(
+            reply_to=self.callback_queue,
+            correlation_id=self.corr_id,
+        ),
+        body=str(n))
+    while self.response is None:
+      self.connection.process_data_events()
+    return self.response
+
+tensorflow_rpc = None
 
 class AppDB:
   sqlite_insert_blob_query = """ INSERT INTO Image
@@ -30,6 +68,8 @@ def bytes_len(n):
 
   # print(image)
   # cur.execute("INSERT INTO stocks VALUES ('2006-01-05','BUY','RHAT',100,35.14)")
+  response = tensorflow_rpc.call(n)
+  print('tensorflow response', response)
   app_db.cur.execute(app_db.sqlite_insert_blob_query, n)
   app_db.con.commit()
   # for row in cur.execute('SELECT * FROM Image ORDER BY name'):
@@ -51,8 +91,12 @@ def on_request(ch, method, props, body):
                      body=str(response))
     ch.basic_ack(delivery_tag=method.delivery_tag)
     print("--- %s seconds ---" % (time.time() - start_time))
+
 try:
   host = sys.argv[1]
+
+  tensorflow_rpc = ImageRpcClient(host=host)
+
   connection = pika.BlockingConnection(
       pika.ConnectionParameters(host=host))
 
