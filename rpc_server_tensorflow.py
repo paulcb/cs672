@@ -62,10 +62,12 @@ def on_request(ch, method, props, body):
     ch.basic_ack(delivery_tag=method.delivery_tag)
     print("--- %s seconds ---" % (time.time() - start_time))
 try:
+  if len(sys.argv) > 2:
+   if sys.argv[2] == 'sleep':
+     time.sleep(10)
   host = sys.argv[1]
-
-  connection = pika.BlockingConnection(
-      pika.ConnectionParameters(host=host))
+  
+  connection = pika.BlockingConnection(pika.ConnectionParameters(host=host, heartbeat=0))
 
   channel = connection.channel()
 

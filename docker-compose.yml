@@ -11,8 +11,9 @@ services:
       - default
 
   tensorflow:
-    image: tensorflow/tensorflow
+    image: tensorflow_app
     hostname: tensorflow-0
+    restart: unless-stopped
     networks:
       - default
 
