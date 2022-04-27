@@ -45,7 +45,7 @@ tensorflow_rpc = None
 
 class AppDB:
   sqlite_insert_blob_query = """ INSERT INTO Image
-                            (name, img, img_resize, height, width, r_height, r_width) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""
+                            (name, img, img_resize, height, width, r_height, r_width, label_string) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""
   def __init__(self) -> None:
     self.con = sqlite3.connect('example.db')
     self.cur = self.con.cursor()
