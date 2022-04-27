@@ -45,18 +45,18 @@ tensorflow_rpc = None
 
 class AppDB:
   sqlite_insert_blob_query = """ INSERT INTO Image
-                            (name, img, height, width) VALUES (?, ?, ?, ?)"""
+                            (name, img, img_resize, height, width, r_height, r_width) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""
   def __init__(self) -> None:
     self.con = sqlite3.connect('example.db')
     self.cur = self.con.cursor()
     self.cur.execute("DROP TABLE IF EXISTS Image")
-    self.cur.execute('''CREATE TABLE Image (name, img, height, width)''')
+    self.cur.execute('''CREATE TABLE Image (name, img, img_resize, height, width, r_height, r_width, label_string)''')
     self.con.commit()
 
 app_db = AppDB()
 
 
-def bytes_len(n):
+def call_func(values):
   # image = Image.open()
   # return image.height, image.width
   
@@ -67,9 +67,9 @@ def bytes_len(n):
 
   # print(image)
   # cur.execute("INSERT INTO stocks VALUES ('2006-01-05','BUY','RHAT',100,35.14)")
-  response = tensorflow_rpc.call(n)
-  print('tensorflow response', response)
-  app_db.cur.execute(app_db.sqlite_insert_blob_query, n)
+  tensorflow_rpc_out = tensorflow_rpc.call(values)
+  values = values[0], values[1], tensorflow_rpc_out[0], tensorflow_rpc_out[1], tensorflow_rpc_out[2], tensorflow_rpc_out[3], tensorflow_rpc_out[4], tensorflow_rpc_out[5]
+  app_db.cur.execute(app_db.sqlite_insert_blob_query, values)
   app_db.con.commit()
   # for row in cur.execute('SELECT * FROM Image ORDER BY name'):
       # print(row)
@@ -83,7 +83,7 @@ def on_request(ch, method, props, body):
     filedata = ast.literal_eval(n)
     # print(" [.] fib(%s)" % n)
     # response = fib(n)
-    response = bytes_len(filedata)
+    response = call_func(filedata)
     ch.basic_publish(exchange='',
                      routing_key=props.reply_to,
                      properties=pika.BasicProperties(correlation_id = props.correlation_id),

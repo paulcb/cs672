@@ -17,14 +17,14 @@ def bytes_len(n):
   # start_time = time.time()
   image = tf.io.decode_jpeg(n[1])
   # print("1--- %s seconds ---" % (time.time() - start_time))
-
+  shape = tuple(image.shape)
   # start_time = time.time()
   # image = load_img(image, target_size=(224, 224))
-  image = tf.image.resize(image, [224, 224])
+  image_resized = tf.image.resize(image, [224, 224], method='nearest')
   # print("2--- %s seconds ---" % (time.time() - start_time))
-
+  
   # start_time = time.time()
-  image = img_to_array(image)
+  image = img_to_array(image_resized)
   # print("3--- %s seconds ---" % (time.time() - start_time))
 
   # start_time = time.time()
@@ -44,8 +44,9 @@ def bytes_len(n):
   # print("7--- %s seconds ---" % (time.time() - start_time))
 
   label = label[0][0]
-  print('%s (%.2f%%)' % (label[1], label[2]*100))
-  return None
+  label_string = '%s (%.2f%%)' % (label[1], label[2]*100)
+  # print('%s (%.2f%%)' % (label[1], label[2]*100))
+  return tf.io.encode_jpeg(image_resized).numpy(), shape[0], shape[1], 224, 224, label_string
 
 def on_request(ch, method, props, body):
     start_time = time.time()

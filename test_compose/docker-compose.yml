@@ -1,0 +1,14 @@
+version: '3.9'
+
+services:
+  test:
+    image: tensorflow/tensorflow:latest-gpu
+    command: python -c "import tensorflow as tf;tf.test.gpu_device_name()"
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

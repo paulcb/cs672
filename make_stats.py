@@ -4,7 +4,8 @@ from datetime import datetime
 
 # def print_stats():
 
-print_stats = False
+# print_stats = False
+print_stats = True
 
 stat_file = open(sys.argv[1], 'r')
 
@@ -21,9 +22,8 @@ for line in stat_file.readlines():
   if print_stats:
     print('-------------------')
   if 'Name' in stats:
-    if stats['Name'] == 'cs672-app_a-0-1':
+    if stats['Name'] == 'cs672_app_a-0_1':
         app_1_cpu_u_sum += float(stats['CPUPerc'][:-1])
-        print(float(stats['CPUPerc'][:-1]))
   
   for k,v in stats.items():
     if print_stats:

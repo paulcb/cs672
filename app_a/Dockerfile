@@ -7,8 +7,8 @@ RUN apt -y install python3
 RUN apt -y install python3-pip
 RUN pip3 install pillow
 RUN pip3 install pika
-COPY ../rpc_server.py /opt
-COPY ../rpc_client.py /opt
+COPY rpc_server.py /opt
+COPY rpc_client.py /opt
 
 CMD ["python3", "/opt/rpc_server.py", "rabbit-0", "sleep"]
 # RUN python3 /opt/rpc_server.py

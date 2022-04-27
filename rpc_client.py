@@ -3,6 +3,7 @@ from PIL import Image
 import time
 import pika
 import uuid
+import signal
 
 
 class ImageRpcClient(object):
@@ -40,6 +41,12 @@ class ImageRpcClient(object):
             self.connection.process_data_events()
         return self.response
 
+# outfile = open(sys.argv[2], 'w')
+
+def signal_handler(sig, frame):
+    # outfile.close()
+    sys.exit(0)
+signal.signal(signal.SIGTERM, signal_handler)
 host = sys.argv[1]
 c = 0
 image_rpc = ImageRpcClient(host=host)
@@ -52,12 +59,15 @@ while True:
   # img = img.tobytes()
   file = open(image_path, 'rb')
   blobData = file.read()
-  print(" [x] Requesting image(x)")
+  # print(" [x] Requesting image(x)")
   # response = image_rpc.call("abcdefghijklmnopqrstuvwxyz")
   # response = image_rpc.call([image_path, img, img_height, img_width])
   response = image_rpc.call([image_path, blobData, 0, 0])
-  print(" [.] Got %r" % response)
+  # print(" [.] Got %r" % response)
   c+=1
   print('count', c)
   print("--- %s seconds ---" % (time.time() - start_time))
+  # outfile.write("--- %s seconds ---" % str((time.time() - start_time)) + '\n')
+  # outfile.write('count' + str(c) +  '\n')
   # break
+
