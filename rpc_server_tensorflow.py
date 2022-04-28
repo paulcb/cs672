@@ -1,3 +1,4 @@
+import ast
 import sys
 import time
 from PIL import Image
@@ -10,12 +11,14 @@ from keras.applications.vgg16 import preprocess_input
 from keras.applications.vgg16 import decode_predictions
 from keras.applications.vgg16 import VGG16
 
+
+
 # load the model
 model = VGG16()
 
-def bytes_len(n):
+def bytes_len(values):
   # start_time = time.time()
-  image = tf.io.decode_jpeg(n[1])
+  image = tf.io.decode_jpeg(values[1])
   # print("1--- %s seconds ---" % (time.time() - start_time))
   shape = tuple(image.shape)
   # start_time = time.time()
@@ -46,12 +49,13 @@ def bytes_len(n):
   label = label[0][0]
   label_string = '%s (%.2f%%)' % (label[1], label[2]*100)
   # print('%s (%.2f%%)' % (label[1], label[2]*100))
-  return tf.io.encode_jpeg(image_resized).numpy(), shape[0], shape[1], 224, 224, label_string
+
+  # print(shape[0], shape[1], 224, 224, label_string)
+  return [tf.io.encode_jpeg(image_resized).numpy(), shape[0], shape[1], 224, 224, label_string]
 
 def on_request(ch, method, props, body):
     start_time = time.time()
     n = body.decode("utf-8")
-    import ast
     filedata = ast.literal_eval(n)
     # print(" [.] fib(%s)" % n)
     # response = fib(n)

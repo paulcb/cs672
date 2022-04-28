@@ -1,16 +1,15 @@
 import sys
 import time
 import sqlite3
-from PIL import Image
-from urllib import response
 import pika
 import uuid
+import ast
 
 
 class ImageRpcClient(object):
 
   def __init__(self, host='localhost'):
-    self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=host, heartbeat=0))
+    self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=host))
 
     self.channel = self.connection.channel()
 
@@ -39,7 +38,9 @@ class ImageRpcClient(object):
         body=str(message))
     while self.response is None:
       self.connection.process_data_events()
-    return self.response
+    response = self.response.decode("utf-8")
+    response = ast.literal_eval(response)
+    return response
 
 tensorflow_rpc = None
 
@@ -47,7 +48,7 @@ class AppDB:
   sqlite_insert_blob_query = """ INSERT INTO Image
                             (name, img, img_resize, height, width, r_height, r_width, label_string) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""
   def __init__(self) -> None:
-    self.con = sqlite3.connect('example.db')
+    self.con = sqlite3.connect('opt/example.db')
     self.cur = self.con.cursor()
     self.cur.execute("DROP TABLE IF EXISTS Image")
     self.cur.execute('''CREATE TABLE Image (name, img, img_resize, height, width, r_height, r_width, label_string)''')
@@ -67,9 +68,11 @@ def call_func(values):
 
   # print(image)
   # cur.execute("INSERT INTO stocks VALUES ('2006-01-05','BUY','RHAT',100,35.14)")
-  tensorflow_rpc_out = tensorflow_rpc.call(values)
-  values = values[0], values[1], tensorflow_rpc_out[0], tensorflow_rpc_out[1], tensorflow_rpc_out[2], tensorflow_rpc_out[3], tensorflow_rpc_out[4], tensorflow_rpc_out[5]
-  app_db.cur.execute(app_db.sqlite_insert_blob_query, values)
+  # print(values[0])
+  t_out = tensorflow_rpc.call(values)
+  # print(t_out[1], t_out[2], t_out[3], t_out[4], t_out[5])
+  store_values = (values[0], values[1], t_out[0], t_out[1], t_out[2], t_out[3], t_out[4], t_out[5])
+  app_db.cur.execute(app_db.sqlite_insert_blob_query, store_values)
   app_db.con.commit()
   # for row in cur.execute('SELECT * FROM Image ORDER BY name'):
       # print(row)
