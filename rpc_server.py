@@ -82,7 +82,6 @@ def call_func(values):
 def on_request(ch, method, props, body):
     start_time = time.time()
     n = body.decode("utf-8")
-    import ast
     filedata = ast.literal_eval(n)
     # print(" [.] fib(%s)" % n)
     # response = fib(n)
