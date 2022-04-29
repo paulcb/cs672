@@ -61,24 +61,10 @@ for image_path in files:
   files_load.append((blobData, image_path))
 while True:
   start_time = time.time()
-  image_path = '0_11.jpg'
-  # img = Image.open(image_path)
-  # img_height = img.height
-  # img_width = img.width
-  # img = img.tobytes()
   irand = random.randrange(files_range)
   blobData, image_path = files_load[irand]
-  # file = open(files[irand], 'rb')
-  # blobData = file.read()
-  # print(" [x] Requesting image(x)")
-  # response = image_rpc.call("abcdefghijklmnopqrstuvwxyz")
-  # response = image_rpc.call([image_path, img, img_height, img_width])
   response = image_rpc.call([image_path, blobData, 0, 0])
-  # print(" [.] Got %r" % response)
   c+=1
   print('count', c)
   print("--- %s seconds ---" % (time.time() - start_time))
-  # outfile.write("--- %s seconds ---" % str((time.time() - start_time)) + '\n')
-  # outfile.write('count' + str(c) +  '\n')
-  # break
 

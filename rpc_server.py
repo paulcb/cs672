@@ -4,6 +4,8 @@ import sqlite3
 import pika
 import uuid
 import ast
+import psutil
+import json
 
 
 class ImageRpcClient(object):
@@ -43,6 +45,10 @@ class ImageRpcClient(object):
     return response
 
 tensorflow_rpc = None
+class Metrics:
+  transaction = {}
+metrics = Metrics()
+metrics.transaction['transaction_count'] = 1
 
 class AppDB:
   sqlite_insert_blob_query = """ INSERT INTO Image
@@ -58,17 +64,6 @@ app_db = AppDB()
 
 
 def call_func(values):
-  # image = Image.open()
-  # return image.height, image.width
-  
-  # print(type(n))
-  # print(len(n))
-  # print(n[0], '-', len(n[1]), n[2], n[3])
-  # image = Image.frombytes('RGB', (n[2], n[3]), n[1])
-
-  # print(image)
-  # cur.execute("INSERT INTO stocks VALUES ('2006-01-05','BUY','RHAT',100,35.14)")
-  # print(values[0])
   t_out = tensorflow_rpc.call(values)
   # print(t_out[1], t_out[2], t_out[3], t_out[4], t_out[5])
   store_values = (values[0], values[1], t_out[0], t_out[1], t_out[2], t_out[3], t_out[4], t_out[5])
@@ -77,10 +72,12 @@ def call_func(values):
   # for row in cur.execute('SELECT * FROM Image ORDER BY name'):
       # print(row)
 
-  # return image
+  # return 'success '
+  return 'success ' + t_out[5]
 
 def on_request(ch, method, props, body):
     start_time = time.time()
+    
     n = body.decode("utf-8")
     filedata = ast.literal_eval(n)
     # print(" [.] fib(%s)" % n)
@@ -91,8 +88,33 @@ def on_request(ch, method, props, body):
                      properties=pika.BasicProperties(correlation_id = props.correlation_id),
                      body=str(response))
     ch.basic_ack(delivery_tag=method.delivery_tag)
-    print("--- %s seconds ---" % (time.time() - start_time))
+    t_out = 't_' + str(metrics.transaction['transaction_count'])
+    metrics.transaction[t_out] = {}
+    ioc_out = psutil.disk_io_counters()
+    metrics.transaction[t_out]['read_count'] = ioc_out.read_count
+    metrics.transaction[t_out]['write_count'] = ioc_out.write_count
+    metrics.transaction[t_out]['read_bytes'] = ioc_out.read_bytes
+    metrics.transaction[t_out]['write_bytes'] = ioc_out.write_bytes
+    metrics.transaction[t_out]['read_time'] = ioc_out.read_time
+    metrics.transaction[t_out]['write_time'] = ioc_out.write_time
+    try:
+      metrics.transaction[t_out]['read_merged_count'] = ioc_out.read_merged_count
+      metrics.transaction[t_out]['write_merged_count'] = ioc_out.write_merged_count
+      metrics.transaction[t_out]['busy_time'] = ioc_out.busy_time
+    except AttributeError:
+      pass
+    cpu_out = psutil.cpu_percent(interval=None, percpu=True)
+    metrics.transaction[t_out]['cpu_perc'] = cpu_out
 
+    netio_out = psutil.net_io_counters()
+    metrics.transaction[t_out]['bytes_sent'] = netio_out.bytes_sent
+    metrics.transaction[t_out]['bytes_recv'] = netio_out.bytes_recv
+    metrics.transaction[t_out]['packets_sent'] = netio_out.packets_sent
+    metrics.transaction[t_out]['packets_recv'] = netio_out.packets_recv
+    t_time = time.time() - start_time
+    metrics.transaction['t_time'] = t_time
+    print("--- %s seconds ---" % t_time)
+    metrics.transaction['transaction_count'] = metrics.transaction['transaction_count'] + 1
 try:
   if len(sys.argv) > 2:
     if sys.argv[2] == 'sleep':
@@ -115,4 +137,6 @@ try:
   print(" [x] Awaiting RPC requests")
   channel.start_consuming()
 finally:
+  outfile = open('/opt/transaction.json', 'w')
+  json.dump(metrics.transaction, outfile, indent=2)
   app_db.con.close()

@@ -1,0 +1,27 @@
+
+root@299bc82d7899:/# iperf -s &
+[1] 2944
+root@299bc82d7899:/# ------------------------------------------------------------
+Server listening on TCP port 5001
+TCP window size:  128 KByte (default)
+------------------------------------------------------------
+
+root@299bc82d7899:/# iperf -c localhost
+------------------------------------------------------------
+Client connecting to localhost, TCP port 5001
+TCP window size: 2.76 MByte (default)
+------------------------------------------------------------
+[  3] local 127.0.0.1 port 50730 connected with 127.0.0.1 port 5001
+[  4] local 127.0.0.1 port 5001 connected with 127.0.0.1 port 50730
+[ ID] Interval       Transfer     Bandwidth
+[  3]  0.0-10.0 sec  58.2 GBytes  50.0 Gbits/sec
+[ ID] Interval       Transfer     Bandwidth
+[  4]  0.0-10.0 sec  58.2 GBytes  50.0 Gbits/sec
+root@299bc82d7899:/# time dd if=/dev/zero of=test.out bs=1M count=1024 oflag=direct
+1024+0 records in
+1024+0 records out
+1073741824 bytes (1.1 GB, 1.0 GiB) copied, 0.422435 s, 2.5 GB/s
+
+real	0m0.426s
+user	0m0.000s
+sys	0m0.164s
