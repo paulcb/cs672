@@ -4,7 +4,7 @@
 rm transactions.txt
 rm out.txt
 
-python3 rpc_client.py localhost transactions.txt &
+python3 rpc_client.py localhost > transactions.txt &
 pid1=$!
 echo $pid1
 d1=`date "+%H:%M:%S"`
