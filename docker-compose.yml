@@ -10,12 +10,12 @@ services:
     networks:
       - default
 
-  # tensorflow:
-  #   image: tensorflow_app
-  #   hostname: tensorflow-0
-  #   restart: unless-stopped
-  #   networks:
-  #     - default
+  tensorflow:
+    image: tensorflow_app
+    hostname: tensorflow-0
+    restart: unless-stopped
+    networks:
+      - default
 
   app_a-0:
     image: app_a
