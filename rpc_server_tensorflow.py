@@ -35,7 +35,11 @@ def bytes_len(values):
   # print("4--- %s seconds ---" % (time.time() - start_time))
 
   # start_time = time.time()
-  image = preprocess_input(image.copy())
+  try:
+    image = preprocess_input(image.copy())
+  except IndexError as ie:
+    print(ie)
+    return ['', 0, 0, 224, 224, 'none']
   # print("5--- %s seconds ---" % (time.time() - start_time))
 
   # start_time = time.time()

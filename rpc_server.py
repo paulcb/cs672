@@ -6,6 +6,7 @@ import uuid
 import ast
 import psutil
 import json
+import os
 
 
 class ImageRpcClient(object):
@@ -47,8 +48,14 @@ class ImageRpcClient(object):
 tensorflow_rpc = None
 class Metrics:
   transaction = {}
+  outfile = None
 metrics = Metrics()
 metrics.transaction['transaction_count'] = 1
+
+m_path = 'opt/transaction_metrics.txt'
+if os.path.isfile(m_path):
+  os.remove(m_path)
+metrics.outfile = open(m_path, 'a')
 
 class AppDB:
   sqlite_insert_blob_query = """ INSERT INTO Image
@@ -91,6 +98,7 @@ def on_request(ch, method, props, body):
     t_out = 't_' + str(metrics.transaction['transaction_count'])
     metrics.transaction[t_out] = {}
     ioc_out = psutil.disk_io_counters()
+    metrics.transaction[t_out]['t_num'] = metrics.transaction['transaction_count']
     metrics.transaction[t_out]['read_count'] = ioc_out.read_count
     metrics.transaction[t_out]['write_count'] = ioc_out.write_count
     metrics.transaction[t_out]['read_bytes'] = ioc_out.read_bytes
@@ -105,7 +113,17 @@ def on_request(ch, method, props, body):
       pass
     cpu_out = psutil.cpu_percent(interval=None, percpu=True)
     metrics.transaction[t_out]['cpu_perc'] = cpu_out
-
+    cpu_times = psutil.cpu_times()
+    metrics.transaction[t_out]['user'] = cpu_times.user
+    metrics.transaction[t_out]['nice'] = cpu_times.nice
+    metrics.transaction[t_out]['system'] = cpu_times.system
+    metrics.transaction[t_out]['idle'] = cpu_times.idle
+    metrics.transaction[t_out]['iowait'] = cpu_times.iowait
+    metrics.transaction[t_out]['irq'] = cpu_times.irq
+    metrics.transaction[t_out]['softirq'] = cpu_times.softirq
+    metrics.transaction[t_out]['steal'] = cpu_times.steal
+    metrics.transaction[t_out]['guest'] = cpu_times.guest
+    metrics.transaction[t_out]['guest_nice'] = cpu_times.guest_nice
     netio_out = psutil.net_io_counters()
     metrics.transaction[t_out]['bytes_sent'] = netio_out.bytes_sent
     metrics.transaction[t_out]['bytes_recv'] = netio_out.bytes_recv
@@ -113,8 +131,13 @@ def on_request(ch, method, props, body):
     metrics.transaction[t_out]['packets_recv'] = netio_out.packets_recv
     t_time = time.time() - start_time
     metrics.transaction['t_time'] = t_time
+    metric_json = json.dumps(metrics.transaction[t_out])
+    metrics.outfile.write(metric_json + '\n')
+    metrics.outfile.flush()
     print("--- %s seconds ---" % t_time)
     metrics.transaction['transaction_count'] = metrics.transaction['transaction_count'] + 1
+
+
 try:
   if len(sys.argv) > 2:
     if sys.argv[2] == 'sleep':
@@ -137,6 +160,7 @@ try:
   print(" [x] Awaiting RPC requests")
   channel.start_consuming()
 finally:
-  outfile = open('/opt/transaction.json', 'w')
-  json.dump(metrics.transaction, outfile, indent=2)
+  # outfile = open('/opt/transaction.json', 'w')
+  # json.dump(metrics.transaction, outfile, indent=2)
+  metrics.outfile.close()
   app_db.con.close()
